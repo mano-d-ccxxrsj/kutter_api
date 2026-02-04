@@ -1,5 +1,13 @@
 .env
 
+# target pasta de build default
 /target
+# z_target pasta de build custom
+/z_target
+
+Cargo.lock
+
 .fleet
 .idea
+
+.DS_Store

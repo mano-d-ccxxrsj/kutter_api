@@ -1,0 +1,4 @@
+# Muda a pasta target para z_target
+# Apenas para organização visual por ordem alfabética
+[build]
+target-dir = "z_target"

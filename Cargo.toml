@@ -1,9 +1,13 @@
-[package]
-name = "kutter_api"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = ["app", "infra", "persistance", "security", "shared", "web", ]
 
-[dependencies]
-actix-web = "4"
-sqlx = { version = "0.8.0", features = ["runtime-tokio", "postgres"]}
-dotenv = "0.15.0"
+resolver = "2"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+opt-level = 3
