@@ -1,0 +1,14 @@
+[package]
+name = "persistence"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+shared = { path = "../shared", version = "0.1.0" }
+
+sqlx = { version = "0.8.6", default-features = false, features = [
+    "postgres",
+    "runtime-tokio-native-tls",
+    "chrono",
+    "macros"
+]}

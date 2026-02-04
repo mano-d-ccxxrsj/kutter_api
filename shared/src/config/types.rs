@@ -1,0 +1,17 @@
+pub struct AppConfig {
+    pub db_user: String,
+    pub db_password: String,
+    pub db_host: String,
+    pub db_name: String,
+    pub db_port: u16,
+    pub database_url: String,
+    pub db_max_connections: u32,
+    pub db_min_connections: u32,
+    pub db_max_lifetime: u64,
+    pub db_idle_timeout: u64,
+    pub db_acquire_timeout: u64,
+    pub app_host: String,
+    pub app_client_port: u16,
+    pub app_server_port: u16,
+    pub use_https: bool,
+}

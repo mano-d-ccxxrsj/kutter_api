@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 web = { path = "../web", version = "0.1.0" }
 infra = { path = "../infra", version = "0.1.0" }
-persistance = { path = "../persistance", version = "0.1.0" }
+persistence = { path = "../persistence", version = "0.1.0" }
 shared = { path = "../shared", version = "0.1.0" }
 
 tokio = { version = "1.49.0", default-features = false, features = ["macros", "rt-multi-thread"] }

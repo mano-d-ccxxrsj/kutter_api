@@ -18,9 +18,9 @@ services:
       - .env
 
   db_postgres:
-    image: postgres:lastest
+    image: postgres:latest
     container_name: kutter_db
-    restart: always
+    restart: on-failure
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -28,7 +28,7 @@ services:
     ports:
       - "${DB_PORT}:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql
     env_file:
       - .env
     healthcheck:
