@@ -1,8 +1,8 @@
 use sqlx::PgPool;
-use crate::entity::user::UserRepository;
+use crate::entity::models::UserRepository;
 
 impl UserRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(pool: PgPool) -> UserRepository {
+        UserRepository { pool }
     }
 }

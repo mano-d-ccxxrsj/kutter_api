@@ -1,5 +1,5 @@
 [workspace]
-members = ["app", "infra", "persistence", "security", "shared", "web", ]
+members = ["app", "domain", "infra", "persistence", "security", "shared", "web", ]
 
 resolver = "2"
 

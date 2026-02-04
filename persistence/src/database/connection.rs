@@ -1,10 +1,11 @@
-use std::time::Duration;
-use sqlx::{Error, PgPool, Pool, Postgres, postgres::PgPoolOptions};
+use crate::database::types::{PoolWrapper, PostgresDb, RepositorySet};
+use crate::entity::models::{ChatMessageRepository, FriendRepository, UserRepository};
 use shared::config::types::AppConfig;
-use shared::database::connection::DatabasePort;
-use shared::database::types::DbFuture;
-use crate::database::types::{PostgresDb, RepositorySet};
-use crate::entity::user::UserRepository;
+use shared::database::connection::{DatabasePort, PoolPort};
+use sqlx::{PgPool, postgres::PgPoolOptions};
+use std::time::Duration;
+
+impl PoolPort for PoolWrapper {}
 
 impl PostgresDb {
     pub fn new(config: AppConfig) -> PostgresDb {
@@ -28,20 +29,11 @@ impl DatabasePort for PostgresDb {
             .expect("Falha ao criar pool de conexões com o banco")
     }
 
-    async fn health_check(&self, pool: &Self::Pool) -> DbFuture<bool> {
-        let pool_clone: Pool<Postgres> = pool.clone();
-        Box::pin(async move {
-            sqlx::query("SELECT 1")
-                .execute(&pool_clone)
-                .await
-                .map(|_| true)
-                .map_err(|e: Error| e.to_string())
-        })
-    }
-
     fn create_repositories(&self, pool: Self::Pool) -> Self::Repositories {
         RepositorySet {
-            user: UserRepository::new(pool),
+            user_repo: UserRepository::new(pool.clone()),
+            chat_message_repo: ChatMessageRepository::new(pool.clone()),
+            friend_repo: FriendRepository::new(pool.clone()),
         }
     }
 }

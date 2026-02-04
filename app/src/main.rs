@@ -1,8 +1,9 @@
+use domain::services::ServiceSet;
 use shared::config::ports::{Cloneable, ConfigPort};
 use shared::config::types::AppConfig;
 use shared::database::connection::DatabasePort;
 use infra::config::env::EnvConfig;
-use persistence::database::types::PostgresDb;
+use persistence::database::types::{PoolWrapper, PostgresDb};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -12,7 +13,15 @@ async fn main() -> std::io::Result<()> {
 
     let pool: <PostgresDb as DatabasePort>::Pool = db.create_pool().await;
 
-    let _repos: <PostgresDb as DatabasePort>::Repositories = db.create_repositories(pool.clone());
+    let repos: <PostgresDb as DatabasePort>::Repositories = db.create_repositories(pool.clone());
 
-    Ok(())
+    let services: ServiceSet = ServiceSet::new(repos);
+
+    let pool_wrapper: PoolWrapper = PoolWrapper { inner: pool };
+
+    web::server::run(
+        config,
+        Box::new(pool_wrapper),
+        Box::new(services),
+    ).await
 }

@@ -12,3 +12,9 @@ sqlx = { version = "0.8.6", default-features = false, features = [
     "chrono",
     "macros"
 ]}
+
+# for testing
+#https://crates.io/crates/mockall
+mockall = "0.14.0"
+#https://crates.io/crates/tokio-test
+tokio-test = "0.4.5"
