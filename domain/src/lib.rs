@@ -1,5 +1,3 @@
 pub mod services;
-pub mod user;
-pub mod chat;
-pub mod friend;
-mod services_impl;
+pub mod ports;
+pub mod entities;

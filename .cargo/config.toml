@@ -2,3 +2,4 @@
 # Apenas para organização visual por ordem alfabética
 [build]
 target-dir = "z_target"
+rustc-wrapper = "sccache"

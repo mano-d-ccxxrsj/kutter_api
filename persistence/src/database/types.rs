@@ -1,17 +1,23 @@
 use sqlx::PgPool;
 use shared::config::types::AppConfig;
-use crate::entity::models::{ChatMessageRepository, FriendRepository, UserRepository};
 
 pub struct PoolWrapper {
     pub inner: PgPool,
 }
 
 pub struct PostgresDb {
-    pub config: AppConfig,
+    pub app_config: AppConfig,
+}
+
+pub struct PostgresUserRepository {
+    pub pool: PoolWrapper,
+}
+
+pub struct PostgresFriendRepository {
+    pub pool: PoolWrapper,
 }
 
 pub struct RepositorySet {
-    pub user_repo: UserRepository,
-    pub chat_message_repo: ChatMessageRepository,
-    pub friend_repo: FriendRepository,
+    pub user_repo: PostgresUserRepository,
+    pub friend_repo: PostgresFriendRepository,
 }

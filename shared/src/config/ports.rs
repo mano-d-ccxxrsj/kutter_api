@@ -4,6 +4,6 @@ pub trait ConfigPort {
     fn from_env_file() -> AppConfig;
 }
 
-pub trait Cloneable {
+pub trait CloneablePort {
     fn clone_config(&self) -> Self;
 }
