@@ -1,100 +1,105 @@
-use std::{env, fs, str::Lines};
+use crate::adapters::types::{DefaultConfig, EnvConfig};
 use shared::config::ports::ConfigPort;
 use shared::config::types::AppConfig;
-use crate::adapters::types::{DefaultConfig, EnvConfig};
+use std::{env, path::Path};
 
 impl ConfigPort for EnvConfig {
     fn from_env_file() -> AppConfig {
-        let content: String = fs::read_to_string(".env").expect("erro lendo .env");
+        let _ = dotenvy::dotenv();
 
-        let mut iter: Lines = content.lines();
+        let mut db_host: String = env::var("DB_HOST")
+            .map(|v: String| v.trim().to_string())
+            .unwrap_or_else(|_: env::VarError| DefaultConfig::DEFAULT_DB_HOST.to_string());
 
-        loop {
-            let next: Option<&str> = (&mut iter).next();
+        let mut app_host: String = env::var("APP_HOST")
+            .map(|v: String| v.trim().to_string())
+            .unwrap_or_else(|_: env::VarError| DefaultConfig::DEFAULT_APP_HOST.to_string());
 
-            if next.is_none() {
-                break;
+        if Path::new("/.dockerenv").exists() {
+            if db_host == DefaultConfig::DEFAULT_DB_HOST || db_host == "127.0.0.1" {
+                db_host = DefaultConfig::DEFAULT_DB_DOCKER_HOST.to_string();
             }
-
-            let line: &str = next.unwrap();
-
-            let trimmed_line: &str = line.trim();
-
-            if trimmed_line.is_empty() || trimmed_line.starts_with('#') {
-                continue;
-            }
-
-            let parsed: Option<(&str, &str)> = trimmed_line.split_once('=');
-
-            if parsed.is_none() {
-                continue;
-            }
-
-            let (raw_key, raw_value): (&str, &str) = parsed.unwrap();
-
-            let key: &str = raw_key.trim();
-            let value: &str = raw_value.trim();
-
-            unsafe {
-                env::set_var(key, value);
-            }
+            app_host = "0.0.0.0".to_string();
         }
 
-        AppConfig {
-            db_user: env::var("DB_USER").unwrap(),
-            db_password: env::var("DB_PASSWORD").unwrap(),
-            db_host: env::var("DB_HOST").unwrap(),
-            db_name: env::var("DB_NAME").unwrap(),
+        let db_user: String = env::var("DB_USER")
+            .map(|v: String| v.trim().to_string())
+            .unwrap_or_else(|_: env::VarError| DefaultConfig::DEFAULT_DB_USER.to_string());
 
-            db_port: env::var("DB_PORT")
-                .ok().and_then(|v: String| v.parse().ok())
-                .unwrap_or(DefaultConfig::DEFAULT_PORT),
+        let db_password: String = env::var("DB_PASSWORD")
+            .map(|v: String| v.trim().to_string())
+            .unwrap_or_else(|_: env::VarError| DefaultConfig::DEFAULT_DB_PASSWORD.to_string());
 
-            database_url: env::var("DATABASE_URL").unwrap_or_else(|_| {
+        let db_name: String = env::var("DB_NAME")
+            .map(|v: String| v.trim().to_string())
+            .unwrap_or_else(|_: env::VarError| DefaultConfig::DEFAULT_DB_NAME.to_string());
+
+        let db_port: u16 = env::var("DB_PORT")
+            .map(|v: String| v.trim().to_string()).ok()
+            .and_then(|v: String| v.parse::<u16>().ok())
+            .unwrap_or(DefaultConfig::DEFAULT_PORT);
+
+        let database_url: String = env::var("DATABASE_URL")
+            .map(|v: String| v.trim().to_string())
+            .unwrap_or_else(|_: env::VarError| {
                 format!(
                     "postgres://{}:{}@{}:{}/{}",
-                    env::var("DB_USER").unwrap(),
-                    env::var("DB_PASSWORD").unwrap(),
-                    env::var("DB_HOST").unwrap(),
-                    env::var("DB_PORT").unwrap(),
-                    env::var("DB_NAME").unwrap(),
+                    db_user, db_password, db_host, db_port, db_name
                 )
-            }),
+            });
+
+        AppConfig {
+            db_user,
+            db_password,
+            db_name,
+            db_host,
+            db_port,
+            database_url,
+            app_host,
 
             db_max_connections: env::var("DB_MAX_CONNECTIONS")
-                .ok().and_then(|v: String| v.parse().ok())
+                .map(|v: String| v.trim().to_string()).ok()
+                .and_then(|v: String| v.parse::<u32>().ok())
                 .unwrap_or(DefaultConfig::DEFAULT_MAX_CONNECTIONS),
 
             db_min_connections: env::var("DB_MIN_CONNECTIONS")
-                .ok().and_then(|v: String| v.parse().ok())
+                .map(|v: String| v.trim().to_string()).ok()
+                .and_then(|v: String| v.parse::<u32>().ok())
                 .unwrap_or(DefaultConfig::DEFAULT_MIN_CONNECTIONS),
 
             db_acquire_timeout: env::var("DB_ACQUIRE_TIMEOUT")
-                .ok().and_then(|v: String| v.parse().ok())
+                .map(|v: String| v.trim().to_string()).ok()
+                .and_then(|v: String| v.parse::<u64>().ok())
                 .unwrap_or(DefaultConfig::ACQUIRE_TIMEOUT),
 
             db_max_lifetime: env::var("DB_MAX_LIFETIME")
-                .ok().and_then(|v: String| v.parse().ok())
+                .map(|v: String| v.trim().to_string()).ok()
+                .and_then(|v: String| v.parse::<u64>().ok())
                 .unwrap_or(DefaultConfig::DEFAULT_MAX_LIFETIME),
 
             db_idle_timeout: env::var("DB_IDLE_TIMEOUT")
-                .ok().and_then(|v: String| v.parse().ok())
+                .map(|v: String| v.trim().to_string()).ok()
+                .and_then(|v: String| v.parse::<u64>().ok())
                 .unwrap_or(DefaultConfig::DEFAULT_IDLE_TIMEOUT),
 
-            app_host: env::var("APP_HOST")
-                .unwrap_or(DefaultConfig::DEFAULT_APP_HOST.to_string()),
-
             app_client_port: env::var("APP_CLIENT_PORT")
-                .ok().and_then(|v: String| v.parse().ok())
+                .map(|v: String| v.trim().to_string()).ok()
+                .and_then(|v: String| v.parse::<u16>().ok())
                 .unwrap_or(DefaultConfig::DEFAULT_CLIENT_PORT),
 
             app_server_port: env::var("APP_SERVER_PORT")
-                .ok().and_then(|v: String| v.parse().ok())
+                .map(|v: String| v.trim().to_string()).ok()
+                .and_then(|v: String| v.parse::<u16>().ok())
                 .unwrap_or(DefaultConfig::DEFAULT_APP_PORT),
 
             use_https: env::var("USE_HTTPS")
-                .ok().and_then(|v: String| v.parse().ok())
+                .map(|v: String| v.trim().to_string()).ok()
+                .and_then(|v: String| v.parse::<bool>().ok())
                 .unwrap_or(DefaultConfig::DEFAULT_USE_HTTPS),
+
+            jwt_key: env::var("JWT_KEY")
+                .map(|v: String| v.trim().to_string())
+                .expect("JWT_KEY must be configured"),
         }
     }
 }

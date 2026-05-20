@@ -1,29 +1,37 @@
-FROM rust:latest AS builder
+FROM rust:1.91-slim-bookworm AS chef
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends pkg-config libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN cargo install cargo-chef --version 0.1.77 --locked
+WORKDIR /usr/src/kutter_api
 
-WORKDIR user/src/kutter_api
+ENV CARGO_TARGET_DIR=/usr/src/kutter_api/z_target
 
-COPY Cargo.toml ./Cargo.toml
-COPY app ./app
-COPY infra ./infra
-COPY persistence ./persistence
-COPY security ./security
-COPY shared ./shared
-COPY web ./web
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-RUN cargo fetch
+FROM chef AS builder
+COPY --from=planner /usr/src/kutter_api/recipe.json recipe.json
+RUN RUSTC_WRAPPER="" cargo chef cook --release --recipe-path recipe.json
+COPY . .
+RUN RUSTC_WRAPPER="" cargo build --release
 
-COPY ./ ./
+FROM debian:bookworm-slim AS runtime
 
-RUN cargo build --release
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libssl3 ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-FROM debian:latest
+RUN groupadd --gid 1001 appgroup \
+    && useradd --uid 1001 --gid appgroup --no-create-home appuser
 
 WORKDIR /usr/local/bin
 
-RUN apt-get update && apt-get install -y libssl3 ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /usr/src/kutter_api/z_target/release/app ./app
 
-COPY --from=builder /usr/src/kutter_api/z_target/release/ .
+RUN chmod 500 ./app && chown appuser:appgroup ./app
 
-COPY .env ./
+USER appuser
 
 CMD ["./app"]

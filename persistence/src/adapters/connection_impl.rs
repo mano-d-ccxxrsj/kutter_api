@@ -1,6 +1,9 @@
-use crate::database::types::{PoolWrapper, PostgresDb, RepositorySet};
+use crate::database::types::{
+    PoolWrapper, PostgresChannelRepository, PostgresCommunityRepository, PostgresDb,
+    PostgresMemberRepository, PostgresTokenRepository, PostgresMessageRepository, PostgresUserRepository, RepositorySet,
+};
 use shared::config::types::AppConfig;
-use shared::database::aliases::DbFuture;
+use shared::database::types::DbFuture;
 use shared::database::ports::{DatabasePort, PoolPort};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Error, PgPool};
@@ -30,11 +33,19 @@ impl DatabasePort for PostgresDb {
                 .max_lifetime(Duration::from_secs(config.db_max_lifetime))
                 .connect(&config.database_url)
                 .await
-                .map_err(|e:Error | e.to_string())
+                .map_err(|e: Error| e.to_string())
         })
     }
 
     fn create_repositories(&self, pool: Self::Pool) -> Self::Repositories {
-        todo!()
+        let wrapper: PoolWrapper = PoolWrapper { inner: pool };
+        RepositorySet {
+            user_repo: PostgresUserRepository::new(wrapper.clone()),
+            token_repo: PostgresTokenRepository::new(wrapper.clone()),
+            channel_repo: PostgresChannelRepository::new(wrapper.clone()),
+            community_repo: PostgresCommunityRepository::new(wrapper.clone()),
+            member_repo: PostgresMemberRepository::new(wrapper.clone()),
+            message_repo: PostgresMessageRepository::new(wrapper.clone()),
+        }
     }
 }

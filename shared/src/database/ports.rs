@@ -1,4 +1,4 @@
-use crate::database::aliases::DbFuture;
+use crate::database::types::DbFuture;
 
 pub trait PoolPort: Send + Sync {}
 

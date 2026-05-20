@@ -1,5 +1,4 @@
 services:
-
   kutter:
     build:
       context: .
@@ -7,20 +6,23 @@ services:
     image: kutter_api:latest
     pull_policy: never
     container_name: kutter_app
+    restart: on-failure
     depends_on:
       db_postgres:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
       APP_PORT: ${APP_PORT:-8080}
     ports:
-      - "${APP_PORT:-8080}"
-    env_file:
-      - .env
+      - "${APP_PORT:-8080}:${APP_PORT:-8080}"
 
   db_postgres:
-    image: postgres:latest
+    image: postgres:17-bookworm
     container_name: kutter_db
     restart: on-failure
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -28,9 +30,7 @@ services:
     ports:
       - "${DB_PORT}:5432"
     volumes:
-      - pg_data:/var/lib/postgresql
-    env_file:
-      - .env
+      - pg_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
