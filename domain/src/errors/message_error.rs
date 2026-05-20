@@ -6,6 +6,7 @@ pub enum MessageError {
     InvalidChannel,
     InvalidReply,
     NotFound,
+    Moderation(String),
     Repository(RepositoryError),
 }
 
@@ -16,6 +17,7 @@ impl Display for MessageError {
             MessageError::InvalidChannel => write!(formatter, "Channel does not belong to community"),
             MessageError::InvalidReply => write!(formatter, "Cannot reply a message from another channel"),
             MessageError::NotFound => write!(formatter, "Message not found"),
+            MessageError::Moderation(error) => write!(formatter, "Content moderation error: {}", error),
             MessageError::Repository(error) => write!(formatter, "Repository error: {}", error),
         }
     }

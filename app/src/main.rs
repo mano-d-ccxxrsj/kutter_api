@@ -24,6 +24,7 @@ async fn run() -> std::io::Result<()> {
     let pool: <PostgresDb as DatabasePort>::Pool = db.create_pool().await.expect("Error creating Pool");
 
     persistence::database::schema::create_auth_schema(&pool).await.expect("Error creating auth schema");
+    persistence::database::schema::create_content_moderation_schema(&pool).await.expect("Error creating content moderation schema");
     persistence::database::schema::create_community_schema(&pool).await.expect("Error creating community schema");
 
     let repositories: RepositorySet = db.create_repositories(pool.clone());

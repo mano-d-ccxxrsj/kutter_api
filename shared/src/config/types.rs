@@ -15,4 +15,5 @@ pub struct AppConfig {
     pub app_server_port: u16,
     pub use_https: bool,
     pub jwt_key: String,
+    pub content_moderation_enabled: bool,
 }

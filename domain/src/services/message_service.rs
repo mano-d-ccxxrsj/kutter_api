@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 
 use crate::entities::message_entity::{ChannelMessage, NewChannelMessage};
 use crate::errors::message_error::MessageError;
+use crate::ports::moderation::content_moderation_port::ContentModerationPort;
 use crate::ports::repositories::channel_repository_port::ChannelRepositoryPort;
 use crate::ports::repositories::member_repository_port::MemberRepositoryPort;
 use crate::ports::repositories::message_repository_port::MessageRepositoryPort;
@@ -13,29 +14,32 @@ use crate::types::message_types::{
     SendChannelMessageCommand,
 };
 
-impl<MessageRepository, MemberRepository, ChannelRepository>
-    MessageService<MessageRepository, MemberRepository, ChannelRepository>
+impl<MessageRepository, MemberRepository, ChannelRepository, ContentModeration>
+    MessageService<MessageRepository, MemberRepository, ChannelRepository, ContentModeration>
 where
     MessageRepository: MessageRepositoryPort,
     MemberRepository: MemberRepositoryPort,
     ChannelRepository: ChannelRepositoryPort,
+    ContentModeration: ContentModerationPort,
 {
     pub fn new(
         messages: MessageRepository,
         members: MemberRepository,
         channels: ChannelRepository,
+        content_moderation: ContentModeration,
     ) -> Self {
-        Self { messages, members, channels }
+        Self { messages, members, channels, content_moderation }
     }
 }
 
 #[async_trait]
-impl<MessageRepository, MemberRepository, ChannelRepository> MessageServicePort
-    for MessageService<MessageRepository, MemberRepository, ChannelRepository>
+impl<MessageRepository, MemberRepository, ChannelRepository, ContentModeration> MessageServicePort
+    for MessageService<MessageRepository, MemberRepository, ChannelRepository, ContentModeration>
 where
     MessageRepository: MessageRepositoryPort,
     MemberRepository: MemberRepositoryPort,
     ChannelRepository: ChannelRepositoryPort,
+    ContentModeration: ContentModerationPort,
 {
     async fn send(&self, command: SendChannelMessageCommand) -> Result<ChannelMessage, MessageError> {
         let is_member: bool = self
@@ -67,6 +71,18 @@ where
                 _ => return Err(MessageError::InvalidReply),
             }
         }
+
+        self
+            .content_moderation
+            .validate(
+                command.user_id,
+                "message",
+                "send",
+                "channel/message/send",
+                &command.message,
+            )
+            .await
+            .map_err(MessageError::Moderation)?;
 
         let timestamp: DateTime<Utc> = Utc::now();
         let message: NewChannelMessage = NewChannelMessage {
@@ -119,6 +135,18 @@ where
         if current_message.user_id != command.user_id {
             return Err(MessageError::Unauthorized);
         }
+
+        self
+            .content_moderation
+            .validate(
+                command.user_id,
+                "message",
+                "edit",
+                "channel/message/edit",
+                &command.message,
+            )
+            .await
+            .map_err(MessageError::Moderation)?;
 
         let updated_message: ChannelMessage = match self
             .messages

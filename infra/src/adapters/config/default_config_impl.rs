@@ -16,4 +16,5 @@ impl DefaultConfig {
     pub const DEFAULT_MAX_LIFETIME: u64 = 60 * 60;
     pub const DEFAULT_IDLE_TIMEOUT: u64 = 30 * 60;
     pub const DEFAULT_USE_HTTPS: bool = false;
+    pub const DEFAULT_CONTENT_MODERATION_ENABLED: bool = false;
 }

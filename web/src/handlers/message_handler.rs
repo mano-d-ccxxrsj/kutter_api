@@ -230,6 +230,7 @@ fn message_error_response(error: MessageError) -> HttpResponse {
         MessageError::InvalidChannel | MessageError::InvalidReply => {
             HttpResponse::BadRequest().body(error.to_string())
         }
+        MessageError::Moderation(_) => HttpResponse::BadRequest().body(error.to_string()),
         MessageError::NotFound => HttpResponse::NotFound().body(error.to_string()),
         MessageError::Repository(_) => HttpResponse::InternalServerError().body(error.to_string()),
     };

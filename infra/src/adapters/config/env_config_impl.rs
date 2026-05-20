@@ -97,6 +97,11 @@ impl ConfigPort for EnvConfig {
                 .and_then(|v: String| v.parse::<bool>().ok())
                 .unwrap_or(DefaultConfig::DEFAULT_USE_HTTPS),
 
+            content_moderation_enabled: env::var("CONTENT_MODERATION_ENABLED")
+                .map(|v: String| v.trim().to_string()).ok()
+                .and_then(|v: String| v.parse::<bool>().ok())
+                .unwrap_or(DefaultConfig::DEFAULT_CONTENT_MODERATION_ENABLED),
+
             jwt_key: env::var("JWT_KEY")
                 .map(|v: String| v.trim().to_string())
                 .expect("JWT_KEY must be configured"),

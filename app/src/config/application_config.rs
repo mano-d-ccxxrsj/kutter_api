@@ -1,9 +1,12 @@
 use domain::ports::services::service_set_port::ServiceSetPort;
-use domain::services::types::{AuthService, ChannelService, CommunityService, MessageService, WebServiceSet};
+use domain::services::types::{
+    AuthService, ChannelService, CommunityService, MessageService, ProfanityContentModerationService,
+    ToggleContentModerationService, WebServiceSet,
+};
 use persistence::database::types::{
-    PoolWrapper, PostgresChannelRepository, PostgresCommunityRepository, PostgresDb,
-    PostgresMemberRepository, PostgresMessageRepository, PostgresTokenRepository,
-    PostgresUserRepository, RepositorySet,
+    PoolWrapper, PostgresBannedWordRepository, PostgresChannelRepository,
+    PostgresCommunityRepository, PostgresDb, PostgresMemberRepository, PostgresMessageRepository,
+    PostgresTokenRepository, PostgresUserFlagRepository, PostgresUserRepository, RepositorySet,
 };
 use security::jwt::token_service::JwtSessionTokenService;
 use security::keys::public_key_service::X25519PublicKeyGenerator;
@@ -49,10 +52,21 @@ impl ApplicationConfig {
             PostgresMessageRepository,
             PostgresMemberRepository,
             PostgresChannelRepository,
+            ToggleContentModerationService<
+                ProfanityContentModerationService<
+                    PostgresBannedWordRepository,
+                    PostgresUserFlagRepository,
+                >,
+            >,
         > = MessageService::new(
             repositories.message_repo,
             repositories.member_repo,
             repositories.channel_repo,
+            Self::content_moderation_service(
+                config,
+                repositories.banned_word_repo,
+                repositories.user_flag_repo,
+            ),
         );
 
         let services: WebServiceSet = WebServiceSet::new(
@@ -63,6 +77,32 @@ impl ApplicationConfig {
         );
 
         services
+    }
+
+    pub fn content_moderation_service(
+        config: &AppConfig,
+        banned_word_repository: PostgresBannedWordRepository,
+        user_flag_repository: PostgresUserFlagRepository,
+    ) -> ToggleContentModerationService<
+        ProfanityContentModerationService<PostgresBannedWordRepository, PostgresUserFlagRepository>,
+    > {
+        let profanity_service: ProfanityContentModerationService<
+            PostgresBannedWordRepository,
+            PostgresUserFlagRepository,
+        > = ProfanityContentModerationService::new(
+            banned_word_repository,
+            user_flag_repository,
+        );
+
+        let service: ToggleContentModerationService<
+            ProfanityContentModerationService<PostgresBannedWordRepository, PostgresUserFlagRepository>,
+        > =
+            ToggleContentModerationService::new(
+                config.content_moderation_enabled,
+                profanity_service,
+            );
+
+        service
     }
 
     pub fn pool_port(pool: <PostgresDb as DatabasePort>::Pool) -> Box<dyn PoolPort> {

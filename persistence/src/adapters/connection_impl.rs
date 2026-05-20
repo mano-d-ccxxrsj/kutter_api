@@ -1,6 +1,7 @@
 use crate::database::types::{
-    PoolWrapper, PostgresChannelRepository, PostgresCommunityRepository, PostgresDb,
-    PostgresMemberRepository, PostgresTokenRepository, PostgresMessageRepository, PostgresUserRepository, RepositorySet,
+    PoolWrapper, PostgresBannedWordRepository, PostgresChannelRepository,
+    PostgresCommunityRepository, PostgresDb, PostgresMemberRepository, PostgresMessageRepository,
+    PostgresTokenRepository, PostgresUserFlagRepository, PostgresUserRepository, RepositorySet,
 };
 use shared::config::types::AppConfig;
 use shared::database::types::DbFuture;
@@ -41,11 +42,13 @@ impl DatabasePort for PostgresDb {
         let wrapper: PoolWrapper = PoolWrapper { inner: pool };
         RepositorySet {
             user_repo: PostgresUserRepository::new(wrapper.clone()),
+            banned_word_repo: PostgresBannedWordRepository::new(wrapper.clone()),
             token_repo: PostgresTokenRepository::new(wrapper.clone()),
             channel_repo: PostgresChannelRepository::new(wrapper.clone()),
             community_repo: PostgresCommunityRepository::new(wrapper.clone()),
             member_repo: PostgresMemberRepository::new(wrapper.clone()),
             message_repo: PostgresMessageRepository::new(wrapper.clone()),
+            user_flag_repo: PostgresUserFlagRepository::new(wrapper.clone()),
         }
     }
 }

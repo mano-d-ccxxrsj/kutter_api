@@ -13,6 +13,10 @@ pub struct PostgresUserRepository {
     pub pool: PoolWrapper,
 }
 
+pub struct PostgresBannedWordRepository {
+    pub pool: PoolWrapper,
+}
+
 pub struct PostgresTokenRepository {
     pub pool: PoolWrapper,
 }
@@ -33,11 +37,17 @@ pub struct PostgresMessageRepository {
     pub pool: PoolWrapper,
 }
 
+pub struct PostgresUserFlagRepository {
+    pub pool: PoolWrapper,
+}
+
 pub struct RepositorySet {
     pub user_repo: PostgresUserRepository,
+    pub banned_word_repo: PostgresBannedWordRepository,
     pub token_repo: PostgresTokenRepository,
     pub channel_repo: PostgresChannelRepository,
     pub community_repo: PostgresCommunityRepository,
     pub member_repo: PostgresMemberRepository,
     pub message_repo: PostgresMessageRepository,
+    pub user_flag_repo: PostgresUserFlagRepository,
 }

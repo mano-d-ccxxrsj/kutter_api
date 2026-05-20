@@ -19,6 +19,7 @@ impl AppConfig {
             app_server_port: self.app_server_port,
             use_https: self.use_https,
             jwt_key: self.jwt_key.clone(),
+            content_moderation_enabled: self.content_moderation_enabled,
         }
     }
 }

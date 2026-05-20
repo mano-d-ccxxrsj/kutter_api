@@ -1,8 +1,11 @@
+use crate::ports::moderation::content_moderation_port::ContentModerationPort;
+use crate::ports::repositories::banned_word_repository_port::BannedWordRepositoryPort;
 use crate::ports::repositories::channel_repository_port::ChannelRepositoryPort;
 use crate::ports::repositories::community_repository_port::CommunityRepositoryPort;
 use crate::ports::repositories::member_repository_port::MemberRepositoryPort;
 use crate::ports::repositories::message_repository_port::MessageRepositoryPort;
 use crate::ports::repositories::token_repository_port::TokenRepositoryPort;
+use crate::ports::repositories::user_flag_repository_port::UserFlagRepositoryPort;
 use crate::ports::repositories::user_repository_port::UserRepositoryPort;
 use crate::ports::security::password_hash_port::PasswordHashPort;
 use crate::ports::security::public_key_generator_port::PublicKeyGeneratorPort;
@@ -57,13 +60,34 @@ where
     pub members: MemberRepository,
 }
 
-pub struct MessageService<MessageRepository, MemberRepository, ChannelRepository>
+pub struct MessageService<MessageRepository, MemberRepository, ChannelRepository, ContentModeration>
 where
     MessageRepository: MessageRepositoryPort,
     MemberRepository: MemberRepositoryPort,
     ChannelRepository: ChannelRepositoryPort,
+    ContentModeration: ContentModerationPort,
 {
     pub messages: MessageRepository,
     pub members: MemberRepository,
     pub channels: ChannelRepository,
+    pub content_moderation: ContentModeration,
+}
+
+pub struct NoopContentModerationService {}
+
+pub struct ToggleContentModerationService<ContentModeration>
+where
+    ContentModeration: ContentModerationPort,
+{
+    pub enabled: bool,
+    pub content_moderation: ContentModeration,
+}
+
+pub struct ProfanityContentModerationService<BannedWordRepository, UserFlagRepository>
+where
+    BannedWordRepository: BannedWordRepositoryPort,
+    UserFlagRepository: UserFlagRepositoryPort,
+{
+    pub banned_words: BannedWordRepository,
+    pub user_flags: UserFlagRepository,
 }

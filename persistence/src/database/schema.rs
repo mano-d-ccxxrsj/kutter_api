@@ -22,6 +22,15 @@ pub async fn create_community_schema(pool: &PgPool) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
+pub async fn create_content_moderation_schema(pool: &PgPool) -> Result<(), sqlx::Error> {
+    create_banned_words_table(pool).await?;
+    migrate_banned_words_table(pool).await?;
+    create_user_flags_table(pool).await?;
+    migrate_user_flags_table(pool).await?;
+
+    Ok(())
+}
+
 async fn create_users_table(pool: &PgPool) -> Result<PgQueryResult, sqlx::Error> {
     sqlx::query(
         "CREATE TABLE IF NOT EXISTS users (
@@ -359,6 +368,100 @@ async fn migrate_messages_table(pool: &PgPool) -> Result<(), sqlx::Error> {
         .await?;
 
     let _: PgQueryResult = sqlx::query("ALTER TABLE messages ALTER COLUMN edited SET NOT NULL")
+        .execute(pool)
+        .await?;
+
+    Ok(())
+}
+
+async fn create_banned_words_table(pool: &PgPool) -> Result<PgQueryResult, sqlx::Error> {
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS banned_words (
+            id     SERIAL PRIMARY KEY,
+            word   TEXT    NOT NULL UNIQUE,
+            active BOOLEAN NOT NULL DEFAULT TRUE
+        )",
+    )
+        .execute(pool)
+        .await
+}
+
+async fn migrate_banned_words_table(pool: &PgPool) -> Result<(), sqlx::Error> {
+    let _: PgQueryResult = sqlx::query("ALTER TABLE banned_words ADD COLUMN IF NOT EXISTS word TEXT")
+        .execute(pool)
+        .await?;
+
+    let _: PgQueryResult = sqlx::query("ALTER TABLE banned_words ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE")
+        .execute(pool)
+        .await?;
+
+    let _: PgQueryResult = sqlx::query("UPDATE banned_words SET active = TRUE WHERE active IS NULL")
+        .execute(pool)
+        .await?;
+
+    let _: PgQueryResult = sqlx::query("ALTER TABLE banned_words ALTER COLUMN active SET NOT NULL")
+        .execute(pool)
+        .await?;
+
+    Ok(())
+}
+
+async fn create_user_flags_table(pool: &PgPool) -> Result<PgQueryResult, sqlx::Error> {
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS user_flags (
+            id             SERIAL PRIMARY KEY,
+            user_id        INTEGER     NOT NULL REFERENCES users(id),
+            field          TEXT        NOT NULL,
+            action         TEXT        NOT NULL,
+            target         TEXT        NOT NULL,
+            attempted_text TEXT        NOT NULL,
+            matched_words  TEXT        NOT NULL,
+            details        TEXT,
+            created_at     TIMESTAMPTZ NOT NULL
+        )",
+    )
+        .execute(pool)
+        .await
+}
+
+async fn migrate_user_flags_table(pool: &PgPool) -> Result<(), sqlx::Error> {
+    let _: PgQueryResult = sqlx::query("ALTER TABLE user_flags ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)")
+        .execute(pool)
+        .await?;
+
+    let _: PgQueryResult = sqlx::query("ALTER TABLE user_flags ADD COLUMN IF NOT EXISTS field TEXT")
+        .execute(pool)
+        .await?;
+
+    let _: PgQueryResult = sqlx::query("ALTER TABLE user_flags ADD COLUMN IF NOT EXISTS action TEXT")
+        .execute(pool)
+        .await?;
+
+    let _: PgQueryResult = sqlx::query("ALTER TABLE user_flags ADD COLUMN IF NOT EXISTS target TEXT")
+        .execute(pool)
+        .await?;
+
+    let _: PgQueryResult = sqlx::query("ALTER TABLE user_flags ADD COLUMN IF NOT EXISTS attempted_text TEXT")
+        .execute(pool)
+        .await?;
+
+    let _: PgQueryResult = sqlx::query("ALTER TABLE user_flags ADD COLUMN IF NOT EXISTS matched_words TEXT")
+        .execute(pool)
+        .await?;
+
+    let _: PgQueryResult = sqlx::query("ALTER TABLE user_flags ADD COLUMN IF NOT EXISTS details TEXT")
+        .execute(pool)
+        .await?;
+
+    let _: PgQueryResult = sqlx::query("ALTER TABLE user_flags ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ")
+        .execute(pool)
+        .await?;
+
+    let _: PgQueryResult = sqlx::query("UPDATE user_flags SET created_at = NOW() WHERE created_at IS NULL")
+        .execute(pool)
+        .await?;
+
+    let _: PgQueryResult = sqlx::query("ALTER TABLE user_flags ALTER COLUMN created_at SET NOT NULL")
         .execute(pool)
         .await?;
 

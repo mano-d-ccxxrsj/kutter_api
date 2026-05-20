@@ -11,18 +11,26 @@ where
     fn serialize_json(&self) -> String {
         let mut json: String = String::from("[");
         let mut first_item: bool = true;
+        let mut item_index: usize = 0;
 
-        for item in self {
+        loop {
+            if item_index >= self.len() {
+                break;
+            }
+
+            let item: &Item = &self[item_index];
+
             if first_item {
                 first_item = false;
             } else {
-                json.push(',');
+                (&mut json).push(',');
             }
 
-            json.push_str(&item.serialize_json());
+            (&mut json).push_str(&item.serialize_json());
+            item_index += 1;
         }
 
-        json.push(']');
+        (&mut json).push(']');
 
         json
     }
@@ -40,20 +48,20 @@ impl JsonObjectBuilder {
     }
 
     pub fn with_i32(mut self, name: &str, value: i32) -> JsonObjectBuilder {
-        self.fields
+        (&mut self.fields)
             .insert(name.to_string(), Value::Number(Number::from(value)));
 
         self
     }
 
     pub fn with_bool(mut self, name: &str, value: bool) -> JsonObjectBuilder {
-        self.fields.insert(name.to_string(), Value::Bool(value));
+        (&mut self.fields).insert(name.to_string(), Value::Bool(value));
 
         self
     }
 
     pub fn with_string(mut self, name: &str, value: &str) -> JsonObjectBuilder {
-        self.fields
+        (&mut self.fields)
             .insert(name.to_string(), Value::String(value.to_string()));
 
         self
@@ -62,11 +70,11 @@ impl JsonObjectBuilder {
     pub fn with_optional_i32(mut self, name: &str, value: Option<i32>) -> JsonObjectBuilder {
         match value {
             Some(found) => {
-                self.fields
+                (&mut self.fields)
                     .insert(name.to_string(), Value::Number(Number::from(found)));
             }
             None => {
-                self.fields.insert(name.to_string(), Value::Null);
+                (&mut self.fields).insert(name.to_string(), Value::Null);
             }
         }
 
@@ -76,11 +84,11 @@ impl JsonObjectBuilder {
     pub fn with_optional_string(mut self, name: &str, value: &Option<String>) -> JsonObjectBuilder {
         match value {
             Some(found) => {
-                self.fields
+                (&mut self.fields)
                     .insert(name.to_string(), Value::String(found.clone()));
             }
             None => {
-                self.fields.insert(name.to_string(), Value::Null);
+                (&mut self.fields).insert(name.to_string(), Value::Null);
             }
         }
 
